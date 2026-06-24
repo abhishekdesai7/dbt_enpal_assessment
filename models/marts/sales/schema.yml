@@ -1,0 +1,92 @@
+version: 2
+
+models:
+  - name: tbl_dim_activity_type
+    description: Dimension table containing activity types used by sales representatives.
+    columns:
+      - name: activity_type_id
+        description: Unique identifier of the activity type.
+        tests:
+          - not_null
+          - unique
+      - name: activity_type_name
+        description: Name of the activity type such as Call, Meeting, or Email.
+      - name: source_system_code
+        description: Source system from which the activity type originated (e.g. Pipedrive)
+      - name: load_timestamp
+        description: Timestamp when the record was loaded into the analytics warehouse.
+
+  - name: tbl_fact_activity
+    description: Activity-level fact table used to analyze sales activities, ownership, and deal engagement.
+    columns:
+      - name: activity_id
+        description: Unique identifier of the activity.
+        tests:
+          - not_null
+          - unique
+      - name: deal_id
+        description: Deal associated with the activity.
+        tests:
+          - relationships:
+              to: ref('tbl_dim_deal')
+              field: deal_id
+              config:
+                severity: warn
+      - name: deal_status
+        description: Current status of the associated deal (lost or open_or_won)
+      - name: assigned_employee_id
+        description: Employee assigned to perform the activity.
+        tests:
+          - relationships:
+              to: ref('tbl_historical_dim_employee')
+              field: employee_id
+      - name: assigned_employee_name
+        description: Name of the assigned employee.
+      - name: assigned_employee_email
+        description: Email of the assigned employee.
+      - name: activity_type
+        description: Type of activity performed.
+      - name: due_date
+        description: Due date of the activity.
+      - name: done
+        description: Indicates whether the activity has been completed.
+      - name: source_system_code
+        description: Source system from which the activity originated (e.g. Pipedrive)
+      - name: load_timestamp
+        description: Timestamp when the record was loaded into the analytics warehouse.
+
+  - name: tbl_fact_deal_stage_durations
+    description: Fact table tracking the amount of time each deal spends in a given funnel stage.
+    columns:
+      - name: deal_id
+        description: Unique identifier of the deal.
+        tests:
+          - not_null
+      - name: stage_id
+        description: Funnel stage identifier.
+        tests:
+          - relationships:
+              to: ref('tbl_dim_stage')
+              field: stage_id
+      - name: entered_stage_at
+        description: Timestamp when the deal entered the stage.
+      - name: exited_stage_at
+        description: Timestamp when the deal exited the stage.
+      - name: days_in_stage
+        description: Number of days the deal remained in the stage.
+
+  - name: tbl_report_sales_funnel
+    description: Reporting table providing monthly sales funnel metrics for dashboarding and business reporting.
+    columns:
+      - name: month
+        description: Reporting month.
+        tests:
+          - not_null
+      - name: kpi_name
+        description: Name of the KPI being reported.
+        tests:
+          - not_null
+      - name: funnel_step
+        description: Name of the Funnel stage.
+      - name: deals_count
+        description: Number of unique deals associated with the KPI and funnel stage.

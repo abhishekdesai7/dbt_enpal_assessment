@@ -1,0 +1,103 @@
+version: 2
+
+models:
+  - name: tbl_dim_deal
+    description: One record per deal containing the current known state of the deal and key lifecycle attributes.
+    columns:
+      - name: deal_id
+        description: Unique identifier of the deal.
+        tests:
+          - not_null
+          - unique
+      - name: deal_created_date
+        description: Date and time when the deal was originally created in Pipedrive.
+      - name: deal_closed_date
+        description: Date and time when the deal was marked as lost. Null for open or won deals.
+      - name: lost_reason
+        description: Reason provided for why the deal was lost.
+      - name: deal_status
+        description: Current status of the deal. Values include lost and open_or_won.
+      - name: source_system_code
+        description: Source system from which the deal record originated (e.g. Pipedrive)
+      - name: load_timestamp
+        description: Timestamp when the record was loaded into the analytics warehouse.
+
+  - name: tbl_dim_stage
+    description: Dimension table containing the list of sales funnel stages.
+    columns:
+      - name: stage_id
+        description: Unique identifier of the funnel stage.
+        tests:
+          - not_null
+          - unique
+      - name: stage_name
+        description: Business name of the funnel stage.
+      - name: source_system_code
+        description: Source system from which the stage record originated (e.g. Pipedrive)
+      - name: load_timestamp
+        description: Timestamp when the record was loaded into the analytics warehouse.
+
+  - name: tbl_fact_deal
+    description: Deal-centric fact table providing the latest ownership and funnel stage information for each deal
+    columns:
+      - name: deal_id
+        description: Unique identifier of the deal.
+        tests:
+          - not_null
+          - unique
+      - name: deal_created_date
+        description: Date and time when the deal was created.
+      - name: deal_closed_date
+        description: Date and time when the deal was closed as lost.
+      - name: lost_reason
+        description: Reason why the deal was lost.
+      - name: deal_status
+        description: Current status of the deal.
+      - name: current_employee_id
+        description: Employee currently assigned to the deal.
+        tests:
+          - relationships:
+              to: ref('tbl_historical_dim_employee')
+              field: employee_id
+              config:
+                severity: warn
+      - name: current_employee_name
+        description: Name of the employee currently assigned to the deal.
+      - name: current_employee_email
+        description: Email of the employee currently assigned to the deal.
+      - name: first_stage_entry_date
+        description: Timestamp when the deal first entered a funnel stage.
+      - name: latest_stage
+        description: Current funnel stage identifier of the deal.
+        tests:
+          - relationships:
+              to: ref('tbl_dim_stage')
+              field: stage_id
+              config:
+                severity: warn
+      - name: latest_stage_entry_date
+        description: Timestamp when the deal entered its current stage.
+      - name: load_timestamp
+        description: Timestamp when the record was loaded into the analytics warehouse.
+
+  - name: tbl_historical_dim_employee
+    description: Historical employee dimension designed to support tracking of employee attribute changes.
+    columns:
+      - name: employee_id
+        description: Unique identifier of the employee.
+        tests:
+          - not_null
+      - name: employee_name
+        description: Full name of the employee.
+      - name: employee_email
+        description: Employee email address.
+      - name: effective_start_date
+        description: Date from which this version of the employee record became valid.
+      - name: effective_end_date
+        description: Date until which this version of the employee record remains valid.
+      - name: employee_is_active
+        description: Indicates whether this is the current active version of the employee record.
+      - name: source_system_code
+        description: Source system from which the employee record originated.
+      - name: load_timestamp
+        description: Timestamp when the record was loaded into the model.
