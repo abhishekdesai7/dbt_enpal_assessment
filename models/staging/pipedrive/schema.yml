@@ -1,0 +1,29 @@
+version: 2
+
+models:
+  - name: vw_stg_pipedrive_user
+    columns:
+      - name: employee_id
+        tests:
+          - not_null
+          - unique
+
+  - name: vw_stg_pipedrive_stage
+    columns:
+      - name: stage_id
+        tests:
+          - not_null
+          - unique
+
+  - name: vw_stg_pipedrive_activity_type
+    columns:
+      - name: activity_type_id
+        tests:
+          - not_null
+          - unique
+
+  - name: vw_stg_pipedrive_activity
+    columns:
+      - name: activity_id
+        tests:
+          - not_null
